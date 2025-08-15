@@ -2,6 +2,16 @@ from pathlib import Path
 from typing import Dict, List
 import json
 import sys
+import argparse
+
+parser = argparse.ArgumentParser(
+    description="CLI utility for centralizing media for transcription purposes"
+)
+parser.add_argument(
+    "-m", "--move", action="store_true", help="move files (default: list moves only)"
+)
+
+args = parser.parse_args()
 
 MEDIA_EXTENSIONS = {
     ".mp4",
@@ -100,6 +110,8 @@ class MediaGrabber:
     transcribe_queue_dir = Path(TRANSCRIBE_DIR)
 
     def __init__(self, directory: str = "."):
+        if not self.transcribe_queue_dir.exists():
+            self.transcribe_queue_dir.mkdir(exist_ok=True)
         self.scan_root_directory = Path(directory)
         self._walk()
 
@@ -118,8 +130,11 @@ class MediaGrabber:
                 if not self._is_in_transcribe_dir(media_file):
                     records.add_file(media_file)
                     new_filepath = self.transcribe_queue_dir / media_file.path.name
-                    print(f">>> Moving {media_file.path.name} to TRANSCRIBE_DIR")
-                    media_file.path.rename(new_filepath)
+                    print(
+                        f">>> Queueing {media_file.path.name} in f{self.transcribe_queue_dir.name}"
+                    )
+                    if args.move:
+                        media_file.path.rename(new_filepath)
             elif not media_file.needs_transcription:
                 if self._is_in_transcribe_dir(media_file):
                     orig_dir = Path(records.get_original_dir(media_file))
@@ -130,7 +145,13 @@ class MediaGrabber:
                         if new_filepath.exists():
                             continue
                         print(f"=== Moving {finished_file.name} to {orig_dir.name}")
-                        finished_file.rename(new_filepath)
+                        if args.move:
+                            finished_file.rename(new_filepath)
+
+        if not args.move:
+            message = "This was a demonstration. Nothing was moved.\n"
+            message += f"{RECORDS_FILE} and {TRANSCRIBE_DIR} were created if they did not already exist."
+            print(message)
 
 
 if __name__ == "__main__":
