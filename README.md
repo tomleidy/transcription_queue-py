@@ -22,6 +22,7 @@ In a directory with subdirectories filled with media you wish to transcribe,
 
 ## Ideas for Future
 
+- Create an unqueue command that reverses the move to the TRANSCRIBE directory (even if missing transcripts)
 - Create a move_basename_files_by_glob helper
 - Allow more customizability about desired subtitle types
 - Unify \_have_srt and \_have_txt methods
