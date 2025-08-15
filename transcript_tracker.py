@@ -131,7 +131,7 @@ class MediaGrabber:
                     records.add_file(media_file)
                     new_filepath = self.transcribe_queue_dir / media_file.path.name
                     print(
-                        f">>> Queueing {media_file.path.name} in f{self.transcribe_queue_dir.name}"
+                        f">>> Queueing {media_file.path.name} in {self.transcribe_queue_dir.name}"
                     )
                     if args.move:
                         media_file.path.rename(new_filepath)
