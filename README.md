@@ -29,3 +29,4 @@ In a directory with subdirectories filled with media you wish to transcribe,
 - Centralize TRANSCRIBE directory
 - Create a secondary script to transcribe the relocated files
 - Add the option to transcribe files in place if they lack the desired subtitle files (basically a complete re-write)
+- Add image and PDF handling via tesseract / OCRmyPDF type handling
