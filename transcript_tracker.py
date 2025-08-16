@@ -3,6 +3,7 @@ from typing import Dict, List
 import json
 import sys
 import argparse
+import glob
 
 parser = argparse.ArgumentParser(
     description="CLI utility for centralizing media for transcription purposes"
@@ -138,7 +139,7 @@ class MediaGrabber:
             elif not media_file.needs_transcription:
                 if self._is_in_transcribe_dir(media_file):
                     orig_dir = Path(records.get_original_dir(media_file))
-                    pattern = media_file.basename + ".*"
+                    pattern = glob.escape(media_file.basename) + ".*"
                     files_to_return = self.transcribe_queue_dir.glob(pattern)
                     for finished_file in files_to_return:
                         new_filepath = orig_dir / finished_file.name
