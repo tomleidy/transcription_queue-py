@@ -32,22 +32,18 @@ TRANSCRIBE_DIR = "./TRANSCRIBE/"
 
 
 class MediaFile:
-    ext: str
-    basename: str
     path: Path
     ready_to_return: bool
     needs_transcription: bool
 
     def __init__(self, path: Path):
         self.path = path
-        self.ext = path.suffix.lower()
-        self.basename = path.stem
         self.needs_transcription = not self._has_srt() or not self._has_txt()
 
     def _get_path_with_ext(self, ext: str):
         if not ext.startswith("."):
             ext = f".{ext}"
-        return self.path.parent / (self.basename + ext)
+        return self.path.parent / (self.path.stem + ext)
 
     def _has_srt(self):
         srt_path = self._get_path_with_ext("srt")
@@ -58,7 +54,7 @@ class MediaFile:
         return txt_path.exists()
 
     def get_record(self):
-        return {self.basename: str(self.path.parent)}
+        return {self.path.stem: str(self.path.parent)}
 
     @staticmethod
     def get_instance_if_media_file(filepath: Path):
@@ -86,18 +82,18 @@ class RecordsManager:
             json.dump(self.records, f, indent=2)
 
     def add_file(self, media_file: MediaFile):
-        if media_file.basename not in self.records:
+        if media_file.path.stem not in self.records:
             self.records.update(media_file.get_record())
 
     def save(self):
         self._save_records()
 
     def get_original_dir(self, media_file: MediaFile):
-        if media_file.basename not in self.records:
+        if media_file.path.stem not in self.records:
             raise KeyError(
                 f"Base filename for {media_file.path.name} not in {RECORDS_FILE}"
             )
-        record = self.records.get(media_file.basename)
+        record = self.records.get(media_file.path.stem)
         if record:
             return record
         sys.exit(1)
@@ -139,7 +135,7 @@ class MediaGrabber:
             elif not media_file.needs_transcription:
                 if self._is_in_transcribe_dir(media_file):
                     orig_dir = Path(records.get_original_dir(media_file))
-                    pattern = glob.escape(media_file.basename) + ".*"
+                    pattern = glob.escape(media_file.path.stem) + ".*"
                     files_to_return = self.transcribe_queue_dir.glob(pattern)
                     for finished_file in files_to_return:
                         new_filepath = orig_dir / finished_file.name
