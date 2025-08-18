@@ -115,6 +115,19 @@ class MediaGrabber:
     def _is_in_transcribe_dir(self, media_file: MediaFile):
         return media_file.path.parent == self.transcribe_queue_dir
 
+    def _glob_move_files(self, media_file: MediaFile, dest_dir: Path):
+        pattern = glob.escape(media_file.path.stem) + ".*"
+        files_to_move = media_file.path.parent.glob(pattern)
+        for file in files_to_move:
+            if file.is_dir():
+                continue
+            new_filepath = dest_dir / file.name
+            if new_filepath.exists():
+                continue
+            print(f"=== Moving {file.name} to {dest_dir.name}")
+            if args.move:
+                file.rename(new_filepath)
+
     def _walk(self):
         files = Path(self.scan_root_directory).rglob("*")
         for file in files:
@@ -126,24 +139,11 @@ class MediaGrabber:
             if media_file.needs_transcription:
                 if not self._is_in_transcribe_dir(media_file):
                     records.add_file(media_file)
-                    new_filepath = self.transcribe_queue_dir / media_file.path.name
-                    print(
-                        f">>> Queueing {media_file.path.name} in {self.transcribe_queue_dir.name}"
-                    )
-                    if args.move:
-                        media_file.path.rename(new_filepath)
+                    self._glob_move_files(media_file, self.transcribe_queue_dir)
             elif not media_file.needs_transcription:
                 if self._is_in_transcribe_dir(media_file):
                     orig_dir = Path(records.get_original_dir(media_file))
-                    pattern = glob.escape(media_file.path.stem) + ".*"
-                    files_to_return = self.transcribe_queue_dir.glob(pattern)
-                    for finished_file in files_to_return:
-                        new_filepath = orig_dir / finished_file.name
-                        if new_filepath.exists():
-                            continue
-                        print(f"=== Moving {finished_file.name} to {orig_dir.name}")
-                        if args.move:
-                            finished_file.rename(new_filepath)
+                    self._glob_move_files(media_file, orig_dir)
 
         if not args.move:
             message = "This was a demonstration. Nothing was moved.\n"
