@@ -4,12 +4,17 @@ import json
 import sys
 import argparse
 import glob
+import subprocess
 
 parser = argparse.ArgumentParser(
     description="CLI utility for centralizing media for transcription purposes"
 )
 parser.add_argument(
     "-m", "--move", action="store_true", help="move files (default: list moves only)"
+)
+
+parser.add_argument(
+    "-A", "--no-audio-check", action="store_true", help="skip audio check; much faster"
 )
 
 args = parser.parse_args()
@@ -35,10 +40,22 @@ class MediaFile:
     path: Path
     ready_to_return: bool
     needs_transcription: bool
+    has_audio: bool
 
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, has_audio: bool = True):
         self.path = path
         self.needs_transcription = not self._has_srt() or not self._has_txt()
+        self.has_audio = has_audio
+
+    @staticmethod
+    def check_file_for_audio(filepath: Path):
+        if args.no_audio_check:
+            return True
+        cmd_line = "ffprobe -loglevel error -select_streams a -show_entries stream=codec_type -of csv=p=0"
+        cmd = cmd_line.split()
+        cmd += [str(filepath)]
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        return result.stdout.strip() == "audio"
 
     def _get_path_with_ext(self, ext: str):
         if not ext.startswith("."):
@@ -60,6 +77,8 @@ class MediaFile:
     def get_instance_if_media_file(filepath: Path):
         if filepath.suffix not in MEDIA_EXTENSIONS:
             return None
+        if not MediaFile.check_file_for_audio(filepath):
+            return MediaFile(filepath, has_audio=False)
         return MediaFile(filepath)
 
 
