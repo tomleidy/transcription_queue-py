@@ -185,12 +185,12 @@ class MediaGrabber:
             media_file = MediaFile.get_instance_if_media_file(file)
             if not media_file:
                 continue
-            # add record check
+            # if the file is missing records, move it into a child directory.
             if args.check_records and self._is_in_transcribe_dir(media_file):
                 if not records.has_record(media_file):
-                    self._glob_move_files(
-                        media_file, media_file.path.parent / "find_original_dir"
-                    )
+                    new_dir = media_file.path.parent / "find_original_dir"
+                    new_dir.mkdir(exist_ok=True)
+                    self._glob_move_files(media_file, new_dir)
                     continue
             if args.import_only and self._is_in_transcribe_dir(media_file):
                 continue
