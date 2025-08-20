@@ -13,6 +13,20 @@ parser.add_argument(
     "-m", "--move", action="store_true", help="move files (default: list moves only)"
 )
 
+imports = parser.add_mutually_exclusive_group()
+imports.add_argument(
+    "-I",
+    "--skip-import",
+    action="store_true",
+    help="skip import, move out of transcribe directory only",
+)
+imports.add_argument(
+    "-i",
+    "--import-only",
+    action="store_true",
+    help="import only; skip checking transcription directory",
+)
+
 audio_check = parser.add_mutually_exclusive_group()
 audio_check.add_argument(
     "-A", "--no-audio-check", action="store_true", help="skip audio check; much faster"
@@ -22,6 +36,12 @@ audio_check.add_argument(
     "--cleanup",
     action="store_true",
     help="return files with missing audio to source directory",
+)
+parser.add_argument(
+    "-C",
+    "--check-records",
+    action="store_true",
+    help="check if all files in TRANSCRIBE have records",
 )
 
 args = parser.parse_args()
@@ -57,6 +77,8 @@ class MediaFile:
     @staticmethod
     def check_file_for_audio(filepath: Path):
         if args.no_audio_check:
+            return True
+        if args.check_records:
             return True
         cmd_line = "ffprobe -loglevel error -select_streams a -show_entries stream=codec_type -of csv=p=0"
         cmd = cmd_line.split()
@@ -114,6 +136,9 @@ class RecordsManager:
     def save(self):
         self._save_records()
 
+    def has_record(self, media_file: MediaFile) -> bool:
+        return self.records.get(glob.escape(media_file.path.stem), None) is not None
+
     def get_original_dir(self, media_file: MediaFile):
         if media_file.path.stem not in self.records:
             raise KeyError(
@@ -161,6 +186,17 @@ class MediaGrabber:
                 continue
             media_file = MediaFile.get_instance_if_media_file(file)
             if not media_file:
+                continue
+            # add record check
+            if args.check_records and self._is_in_transcribe_dir(media_file):
+                if not records.has_record(media_file):
+                    self._glob_move_files(
+                        media_file, media_file.path.parent / "find_original_dir"
+                    )
+                    continue
+            if args.import_only and self._is_in_transcribe_dir(media_file):
+                continue
+            if args.skip_import and not self._is_in_transcribe_dir(media_file):
                 continue
             if args.cleanup:
                 if not media_file.has_audio and self._is_in_transcribe_dir(media_file):
