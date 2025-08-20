@@ -167,15 +167,17 @@ class MediaGrabber:
     def _glob_move_files(self, media_file: MediaFile, dest_dir: Path):
         pattern = glob.escape(media_file.path.stem) + ".*"
         files_to_move = media_file.path.parent.glob(pattern)
-        for file in files_to_move:
-            if file.is_dir():
+        for file_to_move in files_to_move:
+            if file_to_move.is_dir():
+                print(f"{file_to_move} is a directory!?")
                 continue
-            new_filepath = dest_dir / file.name
+            new_filepath = dest_dir / file_to_move.name
             if new_filepath.exists():
+                print(f"### {new_filepath} exists, skipping")
                 continue
-            print(f"=== Moving {file} to {dest_dir}")
+            print(f"=== Moving {file_to_move} to {dest_dir}")
             if args.move:
-                file.rename(new_filepath)
+                file_to_move.rename(new_filepath)
 
     def _walk(self):
         files = Path(self.scan_root_directory).rglob("*")
@@ -186,7 +188,7 @@ class MediaGrabber:
             if not media_file:
                 continue
             # if the file is missing records, move it into a child directory.
-            if args.check_records and self._is_in_transcribe_dir(media_file):
+            if self._is_in_transcribe_dir(media_file):
                 if not records.has_record(media_file):
                     new_dir = media_file.path.parent / "find_original_dir"
                     new_dir.mkdir(exist_ok=True)
