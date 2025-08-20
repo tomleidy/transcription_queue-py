@@ -13,8 +13,15 @@ parser.add_argument(
     "-m", "--move", action="store_true", help="move files (default: list moves only)"
 )
 
-parser.add_argument(
+audio_check = parser.add_mutually_exclusive_group()
+audio_check.add_argument(
     "-A", "--no-audio-check", action="store_true", help="skip audio check; much faster"
+)
+audio_check.add_argument(
+    "-c",
+    "--cleanup",
+    action="store_true",
+    help="return files with missing audio to source directory",
 )
 
 args = parser.parse_args()
@@ -155,7 +162,14 @@ class MediaGrabber:
             media_file = MediaFile.get_instance_if_media_file(file)
             if not media_file:
                 continue
+            if args.cleanup:
+                if not media_file.has_audio and self._is_in_transcribe_dir(media_file):
+                    dest = Path(records.get_original_dir(media_file))
+                    self._glob_move_files(media_file, dest)
+                    continue
             if media_file.needs_transcription:
+                if not media_file.has_audio:
+                    continue
                 if not self._is_in_transcribe_dir(media_file):
                     records.add_file(media_file)
                     self._glob_move_files(media_file, self.transcribe_queue_dir)
