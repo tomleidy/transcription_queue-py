@@ -164,7 +164,7 @@ class MediaGrabber:
         self._walk()
 
     def _is_in_transcribe_dir(self, media_file: MediaFile):
-        return media_file.path.parent == self.transcribe_queue_dir
+        return "TRANSCRIBE" in str(media_file.path)
 
     def _glob_move_files(self, media_file: MediaFile, dest_dir: Path):
         pattern = glob.escape(media_file.path.stem) + ".*"
