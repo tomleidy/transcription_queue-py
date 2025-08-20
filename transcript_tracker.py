@@ -132,9 +132,7 @@ class RecordsManager:
     def add_file(self, media_file: MediaFile):
         if media_file.path.stem not in self.records:
             self.records.update(media_file.get_record())
-
-    def save(self):
-        self._save_records()
+            self._save_records()
 
     def has_record(self, media_file: MediaFile) -> bool:
         return self.records.get(glob.escape(media_file.path.stem), None) is not None
@@ -223,10 +221,6 @@ class MediaGrabber:
 if __name__ == "__main__":
     try:
         scanner = MediaGrabber()
-        records.save()
     except KeyboardInterrupt:
         print()
-        records.save()
         sys.exit(1)
-    except subprocess.CalledProcessError:
-        records.save()
