@@ -143,7 +143,7 @@ class MediaGrabber:
             new_filepath = dest_dir / file.name
             if new_filepath.exists():
                 continue
-            print(f"=== Moving {file.name} to {dest_dir.name}")
+            print(f"=== Moving {file} to {dest_dir}")
             if args.move:
                 file.rename(new_filepath)
 
@@ -171,6 +171,12 @@ class MediaGrabber:
 
 
 if __name__ == "__main__":
-
-    scanner = MediaGrabber()
-    records.save()
+    try:
+        scanner = MediaGrabber()
+        records.save()
+    except KeyboardInterrupt:
+        print()
+        records.save()
+        sys.exit(1)
+    except subprocess.CalledProcessError:
+        records.save()
