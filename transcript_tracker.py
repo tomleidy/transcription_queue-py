@@ -60,7 +60,8 @@ MEDIA_EXTENSIONS = {
     ".opus",
 }
 RECORDS_FILE = "records.json"
-TRANSCRIBE_DIR = "./TRANSCRIBE/"
+TRANSCRIBE_DIR_NAME = "TRANSCRIBE"
+TRANSCRIBE_DIR = f"./{TRANSCRIBE_DIR_NAME}/"
 
 
 class MediaFile:
@@ -104,7 +105,7 @@ class MediaFile:
 
     @staticmethod
     def get_instance_if_media_file(filepath: Path):
-        if filepath.suffix not in MEDIA_EXTENSIONS:
+        if filepath.suffix.lower() not in MEDIA_EXTENSIONS:
             return None
         if not MediaFile.check_file_for_audio(filepath):
             return MediaFile(filepath, has_audio=False)
@@ -158,11 +159,13 @@ class MediaGrabber:
     def __init__(self, directory: str = "."):
         if not self.transcribe_queue_dir.exists():
             self.transcribe_queue_dir.mkdir(exist_ok=True)
-        self.scan_root_directory = Path(directory)
-        self._walk()
+        dirpath = Path(directory)
+        if dirpath.name != TRANSCRIBE_DIR_NAME:
+            self.scan_root_directory = dirpath
+            self._walk()
 
     def _is_in_transcribe_dir(self, media_file: MediaFile):
-        return "TRANSCRIBE" in str(media_file.path)
+        return media_file.path.parent.absolute() == self.transcribe_queue_dir.absolute()
 
     def _glob_move_files(self, media_file: MediaFile, dest_dir: Path):
         pattern = glob.escape(media_file.path.stem) + ".*"
@@ -187,32 +190,33 @@ class MediaGrabber:
             media_file = MediaFile.get_instance_if_media_file(file)
             if not media_file:
                 continue
-            # if the file is missing records, move it into a child directory.
+            if not media_file.has_audio:
+                continue
             if self._is_in_transcribe_dir(media_file):
+                # if the file is missing records, move it into a child directory.
                 if not records.has_record(media_file):
                     new_dir = media_file.path.parent / "find_original_dir"
                     new_dir.mkdir(exist_ok=True)
                     self._glob_move_files(media_file, new_dir)
                     continue
-            if args.import_only and self._is_in_transcribe_dir(media_file):
-                continue
-            if args.skip_import and not self._is_in_transcribe_dir(media_file):
-                continue
-            if args.cleanup:
-                if not media_file.has_audio and self._is_in_transcribe_dir(media_file):
-                    dest = Path(records.get_original_dir(media_file))
-                    self._glob_move_files(media_file, dest)
+                if args.import_only:
                     continue
-            if media_file.needs_transcription:
-                if not media_file.has_audio:
-                    continue
-                if not self._is_in_transcribe_dir(media_file):
-                    records.add_file(media_file)
-                    self._glob_move_files(media_file, self.transcribe_queue_dir)
-            elif not media_file.needs_transcription:
-                if self._is_in_transcribe_dir(media_file):
+                if args.cleanup:
+                    if not media_file.has_audio:
+                        dest = Path(records.get_original_dir(media_file))
+                        self._glob_move_files(media_file, dest)
+                        continue
+                if not media_file.needs_transcription:
                     orig_dir = Path(records.get_original_dir(media_file))
                     self._glob_move_files(media_file, orig_dir)
+            # leave other transcription projects in place
+            if TRANSCRIBE_DIR_NAME in str(media_file.path):
+                continue
+            if args.skip_import:
+                continue
+            if media_file.needs_transcription:
+                records.add_file(media_file)
+                self._glob_move_files(media_file, self.transcribe_queue_dir)
 
         if not args.move:
             message = "This was a demonstration. Nothing was moved.\n"
@@ -222,6 +226,9 @@ class MediaGrabber:
 
 if __name__ == "__main__":
     try:
+        if Path(".").absolute().name == TRANSCRIBE_DIR_NAME:
+            print("CWD is a transcription directory. Please try the parent directory.")
+            sys.exit(1)
         scanner = MediaGrabber()
     except KeyboardInterrupt:
         print()
