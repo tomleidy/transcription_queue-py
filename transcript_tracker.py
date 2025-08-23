@@ -81,6 +81,8 @@ class MediaFile:
             return True
         if args.check_records:
             return True
+        if not filepath.exists():
+            return False
         cmd_line = "ffprobe -loglevel error -select_streams a -show_entries stream=codec_type -of csv=p=0"
         cmd = cmd_line.split()
         cmd += [str(filepath)]
@@ -171,6 +173,8 @@ class MediaGrabber:
         pattern = glob.escape(media_file.path.stem) + ".*"
         files_to_move = media_file.path.parent.glob(pattern)
         for file_to_move in files_to_move:
+            if not file_to_move.exists():
+                continue
             if file_to_move.is_dir():
                 print(f"{file_to_move} is a directory!?")
                 continue
