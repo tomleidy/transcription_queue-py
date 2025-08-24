@@ -109,6 +109,13 @@ class MediaFile:
     def get_instance_if_media_file(filepath: Path):
         if filepath.suffix.lower() not in MEDIA_EXTENSIONS:
             return None
+        if filepath.parent.name != TRANSCRIBE_DIR_NAME:
+            extensions = [".srt", ".txt"]
+            has_transcripts = all(
+                (filepath.parent / (filepath.stem + ext)).exists() for ext in extensions
+            )
+            if has_transcripts:
+                return None
         if not MediaFile.check_file_for_audio(filepath):
             return MediaFile(filepath, has_audio=False)
         return MediaFile(filepath)
