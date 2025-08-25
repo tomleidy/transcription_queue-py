@@ -116,8 +116,8 @@ class MediaFile:
             )
             if has_transcripts:
                 return None
-        if not MediaFile.check_file_for_audio(filepath):
-            return MediaFile(filepath, has_audio=False)
+            if not MediaFile.check_file_for_audio(filepath):
+                return MediaFile(filepath, has_audio=False)
         return MediaFile(filepath)
 
 
