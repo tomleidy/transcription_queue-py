@@ -172,6 +172,8 @@ class MediaGrabber:
         if dirpath.name != TRANSCRIBE_DIR_NAME:
             self.scan_root_directory = dirpath
             self._walk()
+        if len(list(self.transcribe_queue_dir.rglob("*"))) == 0:
+            self.transcribe_queue_dir.rmdir()
 
     def _is_in_transcribe_dir(self, media_file: MediaFile):
         return media_file.path.parent.absolute() == self.transcribe_queue_dir.absolute()
@@ -231,7 +233,7 @@ class MediaGrabber:
 
         if not args.move:
             message = "This was a demonstration. Nothing was moved.\n"
-            message += f"{RECORDS_FILE} and {TRANSCRIBE_DIR} were created if they did not already exist."
+            message += f"{RECORDS_FILE} and {TRANSCRIBE_DIR} may have been created."
             print(message)
 
 
