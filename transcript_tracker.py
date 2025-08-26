@@ -96,7 +96,7 @@ class MediaFile:
 
     @staticmethod
     def check_file_for_audio(path: Path):
-        info = MediaInfo.parse(path)
+        info = MediaInfo.parse(path, full=False)
         return any(track.track_type == "Audio" for track in info.tracks)
 
     @staticmethod
