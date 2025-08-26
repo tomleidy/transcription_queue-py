@@ -130,6 +130,8 @@ class RecordsManager:
             self.records = json.load(f)
 
     def _save_records(self):
+        if not args.move:
+            return
         with self.records_file.open("w", encoding="utf-8") as f:
             json.dump(self.records, f, indent=2)
 
@@ -161,7 +163,8 @@ class MediaGrabber:
 
     def __init__(self, directory: str = "."):
         if not self.transcribe_queue_dir.exists():
-            self.transcribe_queue_dir.mkdir(exist_ok=True)
+            if args.move:
+                self.transcribe_queue_dir.mkdir(exist_ok=True)
         dirpath = Path(directory)
         if dirpath.name != TRANSCRIBE_DIR_NAME:
             self.scan_root_directory = dirpath
@@ -203,8 +206,9 @@ class MediaGrabber:
                 # if the file is missing records, move it into a child directory.
                 if not records.has_record(media_file):
                     new_dir = media_file.path.parent / "find_original_dir"
-                    new_dir.mkdir(exist_ok=True)
-                    self._glob_move_files(media_file, new_dir)
+                    if args.move:
+                        new_dir.mkdir(exist_ok=True)
+                        self._glob_move_files(media_file, new_dir)
                     continue
                 if args.import_only:
                     continue
@@ -227,7 +231,6 @@ class MediaGrabber:
 
         if not args.move:
             message = "This was a demonstration. Nothing was moved.\n"
-            message += f"{RECORDS_FILE} and {TRANSCRIBE_DIR} may have been created."
             print(message)
 
 
