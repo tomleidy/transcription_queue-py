@@ -58,6 +58,8 @@ MEDIA_EXTENSIONS = {
     ".wav",
     ".m4a",
     ".opus",
+    ".ogg",
+    ".mp2",
 }
 RECORDS_FILE = "records.json"
 TRANSCRIBE_DIR_NAME = "TRANSCRIBE"
