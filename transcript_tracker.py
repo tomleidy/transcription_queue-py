@@ -170,7 +170,8 @@ class MediaGrabber:
             self.scan_root_directory = dirpath
             self._walk()
         if len(list(self.transcribe_queue_dir.rglob("*"))) == 0:
-            self.transcribe_queue_dir.rmdir()
+            if args.move:
+                self.transcribe_queue_dir.rmdir()
 
     def _is_in_transcribe_dir(self, media_file: MediaFile):
         return media_file.path.parent.absolute() == self.transcribe_queue_dir.absolute()
