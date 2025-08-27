@@ -144,13 +144,10 @@ class RecordsManager:
         return self.records.get(glob.escape(media_file.path.stem), None) is not None
 
     def get_original_dir(self, media_file: MediaFile):
-        if media_file.path.stem not in self.records:
-            raise KeyError(
-                f"Base filename for {media_file.path.name} not in {RECORDS_FILE}"
-            )
-        record = self.records.get(media_file.path.stem)
+        record = self.records.get(media_file.path.stem, None)
         if record:
             return record
+        print(f"Missing record: {media_file.path}")
         sys.exit(1)
 
 
