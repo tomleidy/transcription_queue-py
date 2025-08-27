@@ -66,6 +66,12 @@ RECORDS_FILE = "records.json"
 TRANSCRIBE_DIR_NAME = "TRANSCRIBE"
 TRANSCRIBE_DIR = f"./{TRANSCRIBE_DIR_NAME}/"
 
+HASH_RECORDS_FILE = Path("hash_records.json")
+# TODO: Implement hash based records
+# TODO: Glob rename files to the sha256 sum of the most significant file (video > audio)
+# TODO: if multiple videos, choose the oldest one
+# TODO: {hash: { stem: stem, origin: original_path }}
+
 
 class MediaFile:
     path: Path
